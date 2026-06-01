@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>As-Haul v1.5</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB6qWLXDiIfp4cvcf4SYqFN84i2ySF_e1Y&libraries=places,geometry&callback=initMap&loading=async" async defer></script>
+  <script>
+    window.gm_authFailure = function() {
+      document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#f97316;font-family:monospace;font-size:0.85rem;flex-direction:column;gap:8px;"><div>⚠ Maps API auth failed</div><div style="font-size:0.7rem;color:#6b7280;">Check API key restrictions in Google Cloud Console</div></div>';
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
+    :root {
+      --bg:#111520;--panel:#181d2c;--border:#2c3244;--accent:#c8f135;--accent2:#3b82f6;
+      --accent-rgb:200,241,53;--text:#e4e8f2;--muted:#6a7290;--input-bg:#1c2230;--radius:10px;
+      --teal:#1d9e75;--blue:#378add;--purple:#7f77dd;--amber:#ef9f27;--orange:#f97316;
+      --sec-teal:rgba(29,158,117,0.07);--sec-blue:rgba(55,138,221,0.07);--sec-purple:rgba(127,119,221,0.07);--sec-amber:rgba(239,159,39,0.07);
+    }
+    /* ── POPULAR UI THEMES ── */
+    /* GitHub Dark */
+    body.theme-github-dark{--bg:#0d1117;--panel:#161b22;--border:#30363d;--accent:#58a6ff;--accent2:#3b82f6;--accent-rgb:88,166,255;--text:#e6edf3;--muted:#8b949e;--input-bg:#21262d;--radius:10px;--teal:#3fb950;--blue:#58a6ff;--purple:#d2a8ff;--amber:#e3b341;--orange:#f0883e;--sec-teal:rgba(63,185,80,0.08);--sec-blue:rgba(88,166,255,0.08);--sec-purple:rgba(210,168,255,0.08);--sec-amber:rgba(227,179,65,0.08);}
+    /* VS Code Dark */
+    body.theme-vscode{--bg:#1e1e1e;--panel:#252526;--border:#3e3e42;--accent:#4fc1ff;--accent2:#569cd6;--accent-rgb:79,193,255;--text:#d4d4d4;--muted:#808080;--input-bg:#2d2d30;--radius:10px;--teal:#4ec9b0;--blue:#569cd6;--purple:#c586c0;--amber:#dcdcaa;--orange:#ce9178;--sec-teal:rgba(78,201,176,0.08);--sec-blue:rgba(86,156,214,0.08);--sec-purple:rgba(197,134,192,0.08);--sec-amber:rgba(220,220,170,0.08);}
+    /* Linear */
+    body.theme-linear{--bg:#0f0f10;--panel:#17171a;--border:#2a2a2f;--accent:#5e6ad2;--accent2:#7b87e8;--accent-rgb:94,106,210;--text:#e2e2e6;--muted:#6e6e80;--input-bg:#1f1f24;--radius:10px;--teal:#26c6a2;--blue:#5e6ad2;--purple:#a78bfa;--amber:#f5c542;--orange:#f97316;--sec-teal:rgba(38,198,162,0.08);--sec-blue:rgba(94,106,210,0.08);--sec-purple:rgba(167,139,250,0.08);--sec-amber:rgba(245,197,66,0.08);}
+    /* Notion Light */
+    body.theme-notion{--bg:#ffffff;--panel:#f7f6f3;--border:#e9e9e7;--accent:#2eaadc;--accent2:#0b6e99;--accent-rgb:46,170,220;--text:#37352f;--muted:#9b9a97;--input-bg:#efefef;--radius:10px;--teal:#0f7b6c;--blue:#0b6e99;--purple:#6940a5;--amber:#dfab01;--orange:#d9730d;--sec-teal:rgba(15,123,108,0.06);--sec-blue:rgba(11,110,153,0.06);--sec-purple:rgba(105,64,165,0.06);--sec-amber:rgba(223,171,1,0.06);}
+    /* Tailwind Slate */
+    body.theme-tailwind{--bg:#f8fafc;--panel:#ffffff;--border:#e2e8f0;--accent:#6366f1;--accent2:#4f46e5;--accent-rgb:99,102,241;--text:#0f172a;--muted:#64748b;--input-bg:#f1f5f9;--radius:10px;--teal:#0d9488;--blue:#3b82f6;--purple:#8b5cf6;--amber:#f59e0b;--orange:#f97316;--sec-teal:rgba(13,148,136,0.07);--sec-blue:rgba(99,102,241,0.07);--sec-purple:rgba(139,92,246,0.07);--sec-amber:rgba(245,158,11,0.07);}
+    /* Warm Dusk — mid amber browns */
+    body.theme-warm-dusk{--bg:#261d14;--panel:#302518;--border:#4a3828;--accent:#e8a84a;--accent2:#d4923a;--accent-rgb:232,168,74;--text:#ede4d4;--muted:#907050;--input-bg:#2c2018;--sec-teal:rgba(29,158,117,0.08);--sec-blue:rgba(55,138,221,0.08);--sec-purple:rgba(200,124,58,0.08);--sec-amber:rgba(239,159,39,0.08);}
+    /* Slate — mid grey-blue */
+    body.theme-slate-light{--bg:#d8dce8;--panel:#e8ecf4;--border:#b0b8cc;--accent:#2563eb;--accent2:#1a50d0;--accent-rgb:37,99,235;--text:#1a202c;--muted:#5a6480;--input-bg:#ccd4e4;--sec-teal:rgba(29,158,117,0.07);--sec-blue:rgba(37,99,235,0.07);--sec-purple:rgba(127,119,221,0.07);--sec-amber:rgba(239,159,39,0.07);}
+    /* Soft Cream — warm mid sand */
+    body.theme-soft-cream{--bg:#ece4d4;--panel:#f8f2e4;--border:#ccbca0;--accent:#6a4c28;--accent2:#8a6438;--accent-rgb:106,76,40;--text:#241808;--muted:#806448;--input-bg:#e4d8c4;--sec-teal:rgba(29,158,117,0.06);--sec-blue:rgba(55,138,221,0.06);--sec-purple:rgba(106,76,40,0.07);--sec-amber:rgba(239,159,39,0.06);}
+    /* Earthy — warm grey-brown */
+    body.theme-earthy{--bg:#524c48;--panel:#6a6358;--border:#887e70;--accent:#e0d868;--accent2:#ccc050;--accent-rgb:224,216,104;--text:#f0ece4;--muted:#a89880;--input-bg:#5a5248;--sec-teal:rgba(29,158,117,0.09);--sec-blue:rgba(55,138,221,0.09);--sec-purple:rgba(127,119,221,0.09);--sec-amber:rgba(224,216,104,0.09);}
+    /* Claude — purple-slate */
+    body.theme-claude{--bg:#221f30;--panel:#2c2840;--border:#403c58;--accent:#cc785c;--accent2:#e8956d;--accent-rgb:204,120,92;--text:#e6e2f2;--muted:#8a86a8;--input-bg:#282438;--sec-teal:rgba(29,158,117,0.08);--sec-blue:rgba(55,138,221,0.08);--sec-purple:rgba(204,120,92,0.08);--sec-amber:rgba(239,159,39,0.08);}
+    /* ── NEW THEMES ── */
+    /* Mint — fresh greens */
+    body.theme-mint{--bg:#cef8d0;--panel:#e0fce2;--border:#90d898;--accent:#3a6840;--accent2:#4e8055;--accent-rgb:58,104,64;--text:#182818;--muted:#4a7450;--input-bg:#c0f0c4;--radius:10px;--sec-teal:rgba(58,104,64,0.08);--sec-blue:rgba(58,104,64,0.07);--sec-purple:rgba(70,78,71,0.07);--sec-amber:rgba(58,104,64,0.07);}
+    /* Neopolitan — rose-plum */
+    body.theme-neopolitan{--bg:#2a1020;--panel:#381828;--border:#583040;--accent:#f3b3a6;--accent2:#e4959e;--accent-rgb:243,179,166;--text:#f2e4e0;--muted:#c09090;--input-bg:#321428;--radius:10px;--sec-teal:rgba(243,179,166,0.07);--sec-blue:rgba(55,81,95,0.09);--sec-purple:rgba(228,149,158,0.08);--sec-amber:rgba(185,139,130,0.08);}
+    /* Lavender — cool grey-blue */
+    body.theme-lavender{--bg:#e0e2f4;--panel:#eeeef8;--border:#b0b4cc;--accent:#4a5080;--accent2:#5c6298;--accent-rgb:74,80,128;--text:#18182a;--muted:#787898;--input-bg:#d4d8f0;--radius:10px;--sec-teal:rgba(74,80,128,0.07);--sec-blue:rgba(74,80,128,0.08);--sec-purple:rgba(141,129,140,0.07);--sec-amber:rgba(165,162,153,0.07);}
+    /* Blush Forest — forest with warm tone */
+    body.theme-blush-forest{--bg:#364438;--panel:#405048;--border:#607860;--accent:#f0d0ca;--accent2:#d8b4ae;--accent-rgb:240,208,202;--text:#f0eae8;--muted:#98a890;--input-bg:#3c4c3e;--radius:10px;--sec-teal:rgba(240,208,202,0.08);--sec-blue:rgba(240,208,202,0.07);--sec-purple:rgba(193,188,172,0.07);--sec-amber:rgba(151,155,141,0.08);}
+    /* Olive Plum — olive with plum */
+    body.theme-olive-plum{--bg:#e8e4d4;--panel:#f4f0e4;--border:#c8c0a8;--accent:#6a4060;--accent2:#985878;--accent-rgb:106,64,96;--text:#1a1018;--muted:#705868;--input-bg:#dcd8c8;--radius:10px;--sec-teal:rgba(187,190,100,0.08);--sec-blue:rgba(106,64,96,0.07);--sec-purple:rgba(68,56,80,0.08);--sec-amber:rgba(188,170,153,0.07);}
+    /* Steel — steel blue-brown */
+    body.theme-steel{--bg:#352820;--panel:#423428;--border:#685848;--accent:#8eb8e5;--accent2:#7c99b4;--accent-rgb:142,184,229;--text:#e4ecf4;--muted:#8898a8;--input-bg:#3c3028;--radius:10px;--sec-teal:rgba(142,184,229,0.08);--sec-blue:rgba(124,153,180,0.08);--sec-purple:rgba(107,127,130,0.07);--sec-amber:rgba(91,87,80,0.09);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background 0.3s,color 0.3s;}
+    header{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--panel);flex-shrink:0;}
+    .header-left{display:flex;align-items:center;gap:12px;}
+    header .logo{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--accent);letter-spacing:-0.5px;}
+    header .sub{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;}
+    .settings-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:5px 10px;transition:all 0.15s;line-height:1;}
+    .settings-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .settings-panel{position:absolute;top:54px;right:16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;z-index:1000;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.25);min-width:200px;}
+    .settings-panel.open{display:block;}
+    .settings-panel h3{font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:10px;}
+    .theme-options{display:flex;flex-direction:column;gap:6px;}
+    .theme-option{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;background:var(--input-bg);}
+    .theme-option:hover{border-color:var(--accent);}
+    .theme-option.active{border-color:var(--accent);background:rgba(var(--accent-rgb),0.08);}
+    .theme-swatch{width:28px;height:18px;border-radius:4px;flex-shrink:0;border:1px solid rgba(0,0,0,0.1);}
+    .theme-name{font-size:0.75rem;color:var(--text);}
+    .main{display:flex;flex:1;overflow:hidden;position:relative;}
+
+    /* ── COLLAPSIBLE PANELS ── */
+    .panel{background:var(--panel);display:flex;flex-direction:column;overflow:hidden;transition:width 0.25s ease;position:relative;}
+    .panel-left{width:340px;border-right:1px solid var(--border);}
+    .panel-right{width:340px;border-left:1px solid var(--border);}
+    .panel.collapsed{width:32px;}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .panel-title{font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);}
+    .collapse-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;padding:3px 6px;font-size:0.75rem;transition:all 0.15s;line-height:1;}
+    .collapse-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .panel-content{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+    .panel.collapsed .panel-content{display:none;}
+    .panel.collapsed .panel-header{padding:10px 6px;justify-content:center;}
+    .panel.collapsed .panel-title{display:none;}
+    .collapsed-label{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);display:none;margin-top:8px;}
+    .panel.collapsed .collapsed-label{display:block;}
+
+    /* ── SIDEBAR ELEMENTS ── */
+    .section-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:6px;}
+    .input-group{display:flex;flex-direction:column;gap:8px;}
+    .location-row{display:flex;align-items:center;gap:8px;}
+    .loc-label{font-size:0.65rem;font-weight:500;color:var(--accent);width:28px;text-transform:uppercase;letter-spacing:1px;flex-shrink:0;}
+    .location-input-wrap{flex:1;position:relative;}
+    .location-input-wrap input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:10px 36px 10px 12px;outline:none;transition:border-color 0.2s;}
+    .location-input-wrap input:focus{border-color:var(--accent);}
+    .location-input-wrap input.active-target{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(var(--accent-rgb),0.15);}
+    .pin-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:2px;transition:color 0.2s;line-height:1;}
+    .pin-btn:hover{color:var(--accent);}
+    .pin-btn.active{color:var(--accent);}
+    .divider-line{height:1px;background:var(--border);margin:2px 0;}
+    .rate-row{display:flex;gap:10px;}
+    .field-box{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:4px;transition:border-color 0.2s,background 0.2s;}
+    .field-box label{font-size:0.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);}
+    .field-box input{background:none;border:none;outline:none;font-family:'DM Mono',monospace;font-size:1rem;color:var(--text);width:100%;}
+    .field-box .out-value{font-size:1rem;font-weight:500;color:var(--accent);font-family:'Syne',sans-serif;}
+    .field-box.is-output{border-color:var(--accent);background:rgba(var(--accent-rgb),0.06);}
+    .toggle-btn{background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--accent);font-family:'DM Mono',monospace;font-size:0.7rem;cursor:pointer;padding:3px 8px;transition:all 0.15s;white-space:nowrap;}
+    .toggle-btn:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.08);}
+    .dist-display{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+    .dist-display .dist-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);}
+    .dist-display .dist-value{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--text);}
+    .split-toggle-row{display:flex;align-items:center;gap:10px;}
+    .checkbox-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.75rem;color:var(--text);user-select:none;}
+    .checkbox-label input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+    .split-section{display:none;flex-direction:column;gap:8px;padding:12px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);margin-top:8px;}
+    .split-section.open{display:flex;}
+    .split-row{display:flex;gap:10px;}
+    .excess-row{display:flex;gap:10px;}
+    .btn-row{display:flex;gap:8px;}
+    .btn{flex:1;padding:11px 10px;border-radius:var(--radius);border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;transition:all 0.15s;}
+    .btn-primary{background:var(--accent);color:var(--bg);}
+    .btn-primary:hover{filter:brightness(1.1);}
+    .btn-secondary{background:var(--input-bg);border:1px solid var(--border);color:var(--text);}
+    .btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+    .preview-box{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;display:flex;flex-direction:column;gap:2px;}
+    .preview-row{display:flex;flex-direction:column;gap:4px;padding:4px 0;border-bottom:1px solid var(--border);}
+    .preview-row:last-child{border-bottom:none;}
+    .preview-line{display:flex;align-items:center;gap:6px;min-height:24px;}
+    .preview-key{font-size:0.72rem;color:var(--muted);flex-shrink:0;width:110px;}
+    .preview-val{font-size:0.78rem;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .preview-val.overridden{color:var(--accent);}
+    .override-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.6rem;cursor:pointer;padding:2px 6px;flex-shrink:0;transition:all 0.15s;text-transform:uppercase;letter-spacing:0.5px;}
+    .override-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .override-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(var(--accent-rgb),0.08);}
+    .override-fields{padding:6px 8px;background:rgba(var(--accent-rgb),0.04);border-radius:6px;border:1px solid rgba(var(--accent-rgb),0.15);display:flex;flex-direction:column;gap:5px;}
+    .ov-check-label{display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--muted);cursor:pointer;}
+    .ov-check-label input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;}
+    .override-input{background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:6px 8px;outline:none;width:100%;transition:border-color 0.2s;}
+    .override-input:focus{border-color:var(--accent);}
+    .tip{font-size:0.68rem;color:var(--muted);background:rgba(var(--accent-rgb),0.06);border:1px solid rgba(var(--accent-rgb),0.18);border-radius:8px;padding:8px 10px;line-height:1.5;}
+    .tip span{color:var(--accent);}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:var(--bg);padding:10px 22px;border-radius:99px;font-size:0.8rem;font-weight:500;opacity:0;transition:all 0.3s;pointer-events:none;z-index:9999;}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+    #map{flex:1;height:100%;min-height:200px;}
+
+    /* ── RIGHT PANEL ── */
+    .provider-filter-box{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+    .filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .cat-badge{font-size:0.65rem;padding:2px 8px;border-radius:99px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;background:var(--input-bg);color:var(--muted);}
+    .cat-badge.active-A{background:#1d9e75;color:#fff;border-color:#1d9e75;}
+    .cat-badge.active-B{background:#3b82f6;color:#fff;border-color:#3b82f6;}
+    .cat-badge.active-C{background:#f59e0b;color:#000;border-color:#f59e0b;}
+    .extra-travel-box{background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.3);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+    .extra-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:#f97316;}
+    .extra-val{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#f97316;}
+    .quote-card{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:border-color 0.15s;}
+    .quote-card:hover{border-color:var(--accent);}
+    .quote-card.active-quote{border-color:var(--accent);background:rgba(var(--accent-rgb),0.06);}
+    .quote-card-name{font-size:0.8rem;font-weight:500;color:var(--text);}
+    .quote-card-detail{font-size:0.7rem;color:var(--muted);}
+    .quote-card-detail span{color:var(--text);}
+    .quote-add-btn{background:var(--input-bg);border:1px dashed var(--border);border-radius:var(--radius);padding:10px;text-align:center;font-size:0.72rem;color:var(--muted);cursor:pointer;transition:all 0.15s;}
+    .quote-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .provider-select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:10px 12px;outline:none;cursor:pointer;}
+    .provider-select:focus{border-color:var(--accent);}
+
+    .sec-block{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+    .sec-block.sec-teal{border-left:2px solid var(--teal);background:var(--sec-teal);}
+    .sec-block.sec-blue{border-left:2px solid var(--blue);background:var(--sec-blue);}
+    .sec-block.sec-purple{border-left:2px solid var(--purple);background:var(--sec-purple);}
+    .sec-block.sec-amber{border-left:2px solid var(--amber);background:var(--sec-amber);}
+    .sec-block.sec-neutral{border-left:2px solid var(--border);}
+    .sec-label-colored{font-size:0.63rem;text-transform:uppercase;letter-spacing:2px;}
+    .lhs-dimmed{opacity:0.28;pointer-events:none;transition:opacity 0.3s;}
+
+    /* ── PRE-AGREED ── */
+    .pre-agreed-bar{display:flex;align-items:center;gap:10px;background:rgba(var(--accent-rgb),0.06);border:1px solid rgba(var(--accent-rgb),0.25);border-radius:var(--radius);padding:10px 12px;cursor:pointer;transition:all 0.15s;user-select:none;}
+    .pre-agreed-bar:hover{background:rgba(var(--accent-rgb),0.10);}
+    .pre-agreed-bar.active{background:rgba(var(--accent-rgb),0.12);border-color:rgba(var(--accent-rgb),0.5);}
+    .pre-agreed-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;transition:all 0.15s;}
+    .pre-agreed-bar.active .pre-agreed-dot{background:var(--accent);border-color:var(--accent);}
+    .pre-agreed-label{font-size:0.8rem;font-weight:500;color:var(--text);}
+    .pre-agreed-rate{margin-left:auto;font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:var(--accent);}
+    /* ── SORT PILLS ── */
+    .sort-pill{font-size:0.65rem;padding:3px 10px;border-radius:99px;border:1px solid var(--border);cursor:pointer;transition:all 0.15s;background:var(--input-bg);color:var(--muted);}
+    .sort-pill.active{border-color:#378add;color:#378add;background:rgba(55,138,221,0.08);}
+    /* ── EXTRA TRAVEL ── */
+    .extra-combined{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:#f97316;}
+    /* ── GREYED ── */
+    .rhs-greyed{opacity:0.3;pointer-events:none;transition:opacity 0.2s;}
+    /* ── AUTOCOMPLETE ── */
+    .pac-container{background:var(--panel)!important;border:1px solid var(--border)!important;border-radius:8px!important;box-shadow:0 8px 24px rgba(0,0,0,0.3)!important;font-family:"DM Mono",monospace!important;margin-top:4px!important;}
+    .pac-item{background:var(--panel)!important;color:var(--text)!important;border-top:1px solid var(--border)!important;padding:8px 12px!important;cursor:pointer!important;font-size:0.78rem!important;}
+    .pac-item:hover,.pac-item-selected{background:var(--input-bg)!important;}
+    .pac-item-query{color:var(--accent)!important;font-size:0.78rem!important;}
+    .pac-matched{color:var(--accent)!important;font-weight:600!important;}
+    .pac-icon{display:none!important;}
+    /* ── EXPAND PANEL ── */
+    .expand-panel{max-height:0;overflow:hidden;transition:max-height 0.4s ease,opacity 0.3s ease;opacity:0;}
+    .expand-panel.open{max-height:3000px;opacity:1;overflow:visible;}
+    /* ── TIER SELECTOR (LHS) ── */
+    .tier-select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:0.85rem;padding:10px 12px;outline:none;cursor:pointer;}
+    .tier-select:focus{border-color:var(--accent);}
+    .tier-result{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:6px;}
+    .tier-row{display:flex;justify-content:space-between;align-items:center;}
+    .tier-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);}
+    .tier-val{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--text);}
+    .tier-val.accent{color:var(--accent);}
+    .tier-val.covered{color:#1d9e75;}
+    .tier-divider{height:1px;background:var(--border);}
+    /* Tier override */
+    .tier-override-wrap{max-height:0;overflow:hidden;transition:max-height 0.3s ease,opacity 0.25s ease;opacity:0;}
+    .tier-override-wrap.open{max-height:120px;opacity:1;}
+    .tier-override-inner{background:rgba(var(--accent-rgb),0.04);border:1px solid rgba(var(--accent-rgb),0.18);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-top:2px;}
+    .tier-override-toggle-row{display:flex;align-items:center;justify-content:space-between;}
+    .tier-override-mode-btn{background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--accent);font-family:'DM Mono',monospace;font-size:0.68rem;cursor:pointer;padding:3px 9px;transition:all 0.15s;white-space:nowrap;}
+    .tier-override-mode-btn:hover{border-color:var(--accent);background:rgba(var(--accent-rgb),0.08);}
+    .tier-override-input-row{display:flex;align-items:center;gap:8px;}
+    .tier-override-prefix{font-size:0.72rem;color:var(--muted);flex-shrink:0;width:64px;}
+    .tier-override-input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;padding:6px 10px;outline:none;transition:border-color 0.2s;}
+    .tier-override-input:focus{border-color:var(--accent);}
+    .tier-override-calc{font-size:0.72rem;color:var(--accent);font-family:'Syne',sans-serif;font-weight:700;}
+    /* ── COLLAPSIBLE DETAILS/SUMMARY ── */
+    .collapse-section-btn{width:100%;background:none;border:none;cursor:pointer;text-align:left;display:flex;align-items:center;gap:6px;padding:4px 0;font-family:'DM Mono',monospace;}
+    .collapse-section-btn .arrow{font-size:0.6rem;color:var(--muted);transition:transform 0.2s;}
+    .collapse-section-btn.open .arrow{transform:rotate(90deg);}
+    .collapsible-content{display:none;}
+    .collapsible-content.open{display:block;}
+    /* ── RHS COVERAGE TIERS ── */
+    .coverage-boxes{display:flex;gap:8px;}
+    .coverage-box{flex:1;padding:10px 12px;border-radius:var(--radius);border:2px solid var(--border);cursor:pointer;transition:all 0.15s;text-align:center;background:var(--input-bg);user-select:none;}
+    .coverage-box:hover{border-color:var(--accent);}
+    .coverage-box.selected{border-color:var(--accent);background:rgba(var(--accent-rgb),0.08);}
+    .coverage-box-tier{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--text);}
+    .coverage-box-amount{font-size:0.7rem;color:var(--muted);margin-top:2px;}
+    .coverage-result{background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+    .coverage-row{display:flex;justify-content:space-between;align-items:center;}
+    .coverage-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);}
+    .coverage-val{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;}
+    .coverage-val.covered{color:#1d9e75;}
+    .coverage-val.excess{color:#f97316;}
+    /* ── MANUAL PRICING OVERRIDE (collapsed toggle) ── */
+    .pricing-override-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(127,119,221,0.06);border:1px solid rgba(127,119,221,0.2);border-radius:var(--radius);cursor:pointer;transition:all 0.15s;user-select:none;}
+    .pricing-override-toggle:hover{background:rgba(127,119,221,0.12);border-color:rgba(127,119,221,0.4);}
+    .pricing-override-toggle.active{background:rgba(127,119,221,0.14);border-color:var(--purple);}
+    .pricing-override-label{font-size:0.72rem;color:var(--muted);}
+    .pricing-override-toggle.active .pricing-override-label{color:var(--purple);}
+    .pricing-override-chevron{font-size:0.7rem;color:var(--muted);transition:transform 0.2s;}
+    .pricing-override-toggle.active .pricing-override-chevron{transform:rotate(180deg);color:var(--purple);}
+    .pricing-override-expand{max-height:0;overflow:hidden;transition:max-height 0.35s ease,opacity 0.25s ease;opacity:0;}
+    .pricing-override-expand.open{max-height:200px;opacity:1;}
+  </style>
+</head>
+<body class="theme-claude">
+
+<header>
+  <div class="header-left">
+    <div>
+      <div class="logo">AS-HAUL</div>
+      <div class="sub">Distance &amp; Pricing Tool &nbsp;·&nbsp; v1.5</div>
+    </div>
+  </div>
+  <button class="settings-btn" onclick="toggleSettings()" title="Colour scheme">⚙</button>
+</header>
+
+<div class="settings-panel" id="settings-panel">
+  <h3>Colour Scheme</h3>
+  <div class="theme-options">
+    <div class="theme-option" id="theme-opt-github-dark" onclick="setTheme('github-dark')"><div class="theme-swatch" style="background:linear-gradient(135deg,#0d1117 50%,#58a6ff 50%)"></div><span class="theme-name">GitHub Dark</span></div>
+    <div class="theme-option" id="theme-opt-vscode" onclick="setTheme('vscode')"><div class="theme-swatch" style="background:linear-gradient(135deg,#1e1e1e 50%,#4fc1ff 50%)"></div><span class="theme-name">VS Code</span></div>
+    <div class="theme-option" id="theme-opt-linear" onclick="setTheme('linear')"><div class="theme-swatch" style="background:linear-gradient(135deg,#0f0f10 50%,#5e6ad2 50%)"></div><span class="theme-name">Linear</span></div>
+    <div class="theme-option" id="theme-opt-notion" onclick="setTheme('notion')"><div class="theme-swatch" style="background:linear-gradient(135deg,#ffffff 50%,#2eaadc 50%)"></div><span class="theme-name">Notion</span></div>
+    <div class="theme-option" id="theme-opt-tailwind" onclick="setTheme('tailwind')"><div class="theme-swatch" style="background:linear-gradient(135deg,#f8fafc 50%,#6366f1 50%)"></div><span class="theme-name">Tailwind</span></div>
+    <div class="theme-option" id="theme-opt-soft-dark" onclick="setTheme('soft-dark')"><div class="theme-swatch" style="background:linear-gradient(135deg,#0f1117 50%,#c8f135 50%)"></div><span class="theme-name">Soft Dark</span></div>
+    <div class="theme-option" id="theme-opt-warm-dusk" onclick="setTheme('warm-dusk')"><div class="theme-swatch" style="background:linear-gradient(135deg,#1a1410 50%,#e8a84a 50%)"></div><span class="theme-name">Warm Dusk</span></div>
+    <div class="theme-option" id="theme-opt-slate-light" onclick="setTheme('slate-light')"><div class="theme-swatch" style="background:linear-gradient(135deg,#f0f2f5 50%,#2563eb 50%)"></div><span class="theme-name">Slate Light</span></div>
+    <div class="theme-option" id="theme-opt-soft-cream" onclick="setTheme('soft-cream')"><div class="theme-swatch" style="background:linear-gradient(135deg,#f5f0e8 50%,#7c5c2e 50%)"></div><span class="theme-name">Soft Cream</span></div>
+    <div class="theme-option" id="theme-opt-earthy" onclick="setTheme('earthy')"><div class="theme-swatch" style="background:linear-gradient(135deg,#454040 50%,#e6f082 50%)"></div><span class="theme-name">Earthy</span></div>
+    <div class="theme-option active" id="theme-opt-claude" onclick="setTheme('claude')"><div class="theme-swatch" style="background:linear-gradient(135deg,#1e1b2e 50%,#cc785c 50%)"></div><span class="theme-name">Claude</span></div>
+    <div class="theme-option" id="theme-opt-mint" onclick="setTheme('mint')"><div class="theme-swatch" style="background:linear-gradient(135deg,#f1fffa 50%,#568259 50%)"></div><span class="theme-name">Mint</span></div>
+    <div class="theme-option" id="theme-opt-neopolitan" onclick="setTheme('neopolitan')"><div class="theme-swatch" style="background:linear-gradient(135deg,#1f0812 50%,#f3b3a6 50%)"></div><span class="theme-name">Neopolitan</span></div>
+    <div class="theme-option" id="theme-opt-lavender" onclick="setTheme('lavender')"><div class="theme-swatch" style="background:linear-gradient(135deg,#f3f4fb 50%,#5a5f8a 50%)"></div><span class="theme-name">Lavender</span></div>
+    <div class="theme-option" id="theme-opt-blush-forest" onclick="setTheme('blush-forest')"><div class="theme-swatch" style="background:linear-gradient(135deg,#2e3b2c 50%,#efd0ca 50%)"></div><span class="theme-name">Blush Forest</span></div>
+    <div class="theme-option" id="theme-opt-olive-plum" onclick="setTheme('olive-plum')"><div class="theme-swatch" style="background:linear-gradient(135deg,#f2f7f2 50%,#8e5572 50%)"></div><span class="theme-name">Olive Plum</span></div>
+    <div class="theme-option" id="theme-opt-steel" onclick="setTheme('steel')"><div class="theme-swatch" style="background:linear-gradient(135deg,#2a1e14 50%,#8eb8e5 50%)"></div><span class="theme-name">Steel</span></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT PANEL -->
+  <div class="panel panel-left" id="panel-left">
+    <div class="panel-header">
+      <span class="panel-title">Job Details</span>
+      <button class="collapse-btn" onclick="togglePanel('left')" title="Collapse">◀</button>
+    </div>
+    <span class="collapsed-label">Job Details</span>
+    <div class="panel-content">
+
+      <div class="sec-block sec-teal">
+        <div class="sec-label-colored" style="color:var(--teal);">Locations</div>
+        <div class="input-group">
+          <div class="location-row">
+            <div class="loc-label">From</div>
+            <div class="location-input-wrap">
+              <input type="text" id="origin-input" placeholder="Address or business..." autocomplete="off"/>
+              <button class="pin-btn" id="pin-origin" onclick="setMapTarget('origin')">📍</button>
+            </div>
+          </div>
+          <div class="location-row">
+            <div class="loc-label">To</div>
+            <div class="location-input-wrap">
+              <input type="text" id="dest-input" placeholder="Address or business..." autocomplete="off"/>
+              <button class="pin-btn" id="pin-dest" onclick="setMapTarget('dest')">📍</button>
+            </div>
+          </div>
+        </div>
+          <div class="tip"><span>📍 Tip:</span> Click pin icon then click map to set a location.</div>
+      </div>
+
+      <div id="lhs-dimable">
+      <div class="sec-block sec-blue">
+        <div class="sec-label-colored" style="color:var(--blue);">Distance</div>
+        <div class="dist-display">
+          <span class="dist-label">Calculated</span>
+          <span class="dist-value" id="dist-value">— km</span>
+        </div>
+      </div>
+
+      <div class="sec-block sec-purple">
+        <div class="sec-label-colored" style="color:var(--purple);">Tier</div>
+        <select class="tier-select" id="tier-select" onchange="calcTier()">
+          <option value="">— Select tier —</option>
+          <option value="T1">T1 — 10 km covered</option>
+          <option value="T2">T2 — 20 km covered</option>
+          <option value="T3">T3 — 50 km covered</option>
+        </select>
+        <div id="tier-second-tow-wrap" style="display:none;">
+          <label class="checkbox-label" style="font-size:0.72rem;">
+            <input type="checkbox" id="tier-second-tow" onchange="calcTier()" style="width:13px;height:13px;accent-color:var(--accent);"/>
+            2nd tow (20 km covered)
+          </label>
+        </div>
+        <div class="tier-result" id="tier-result" style="display:none;">
+          <div class="tier-row">
+            <span class="tier-label">Covered</span>
+            <span class="tier-val" id="tier-covered-val">—</span>
+          </div>
+          <div class="tier-divider"></div>
+          <div class="tier-row">
+            <span class="tier-label">Excess km</span>
+            <span class="tier-val" id="tier-excess-km-val">—</span>
+          </div>
+          <div class="tier-row">
+            <span class="tier-label">Excess cost</span>
+            <span class="tier-val accent" id="tier-excess-cost-val">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIER COST OVERRIDE -->
+      <div class="sec-block sec-neutral" id="tier-override-sec" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="sec-label-colored" style="color:var(--muted);">Cost Override</div>
+          <button class="override-btn" id="tier-override-toggle-btn" onclick="toggleTierOverride()" style="font-size:0.65rem;">override</button>
+        </div>
+        <div class="tier-override-wrap" id="tier-override-wrap">
+          <div class="tier-override-inner">
+            <div class="tier-override-toggle-row">
+              <span style="font-size:0.68rem;color:var(--muted);" id="tier-override-input-label">Enter rate ($/km)</span>
+              <button class="tier-override-mode-btn" onclick="toggleTierOverrideMode()"><span id="tier-override-mode-label">$/km → $total</span> ⇄</button>
+            </div>
+            <div class="tier-override-input-row">
+              <span class="tier-override-prefix" id="tier-override-prefix">Rate ($/km)</span>
+              <input type="number" class="tier-override-input" id="tier-override-input" placeholder="0.00" step="0.01" oninput="calcTierOverride()"/>
+              <span class="tier-override-calc" id="tier-override-calc">$—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MANUAL PRICING (override, collapsed by default) -->
+      <div class="sec-block sec-neutral">
+        <div class="pricing-override-toggle" id="pricing-override-toggle" onclick="togglePricingOverride()">
+          <span class="pricing-override-label">✏ Manual pricing</span>
+          <span class="pricing-override-chevron">▾</span>
+        </div>
+        <div class="pricing-override-expand" id="pricing-override-expand">
+          <div style="padding-top:10px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div class="sec-label-colored" style="color:var(--purple);margin:0;">Pricing</div>
+              <button class="toggle-btn" onclick="togglePricingMode()"><span id="pricing-toggle-label">Rate → Total</span> ⇄</button>
+            </div>
+            <div class="rate-row">
+              <div class="field-box" id="rate-box">
+                <label id="rate-label">Rate ($/km)</label>
+                <input type="number" id="rate-input" placeholder="0.00" step="0.01" oninput="calcPricing()"/>
+              </div>
+              <div class="field-box is-output" id="total-box">
+                <label id="total-label">Total</label>
+                <div class="out-value" id="total-value">$—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-block sec-neutral">
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="calculateRoute()">Calculate</button>
+          <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="copyDetails()">Copy</button>
+        </div>
+      </div>
+
+      <div class="sec-block sec-amber">
+        <div class="split-toggle-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="split-checkbox" onchange="toggleSplit()"/>
+            Split Costs
+          </label>
+          <div id="split-mode-wrap" style="display:none;margin-left:auto;">
+            <button class="toggle-btn" onclick="toggleSplitMode()"><span id="split-toggle-label">$ mode</span> ⇄</button>
+          </div>
+        </div>
+        <div class="split-section" id="split-section">
+          <div class="split-row">
+            <div class="field-box">
+              <label id="covered-label">Covered ($)</label>
+              <input type="number" id="covered-input" placeholder="0.00" step="0.01" oninput="calcSplit()"/>
+            </div>
+          </div>
+          <div class="excess-row">
+            <div class="field-box is-output">
+              <label>Excess ($)</label>
+              <div class="out-value" id="excess-dollar-value">$—</div>
+            </div>
+            <div class="field-box is-output" id="excess-km-box" style="display:none;">
+              <label>Excess (km)</label>
+              <div class="out-value" id="excess-km-value">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAILS preview -->
+      <div class="sec-block sec-neutral" style="border-left:none;">
+        <button class="collapse-section-btn" id="details-btn" onclick="toggleCollapseSection('details-content','details-btn')">
+          <span class="arrow">▶</span><span class="section-label" style="margin-bottom:0;">Details</span>
+        </button>
+        <div class="collapsible-content" id="details-content">
+          <div class="preview-box" style="margin-top:6px;">
+            <div class="preview-row" id="prow-from"><div class="preview-line"><span class="preview-key">From:</span><span class="preview-val" id="pval-from">—</span></div></div>
+            <div class="preview-row" id="prow-to"><div class="preview-line"><span class="preview-key">To:</span><span class="preview-val" id="pval-to">—</span></div></div>
+            <div class="preview-row" id="prow-dist">
+              <div class="preview-line"><span class="preview-key">Dist:</span><span class="preview-val" id="pval-dist">—</span><button class="override-btn" onclick="toggleOverride('dist')">override</button></div>
+              <div class="override-fields" id="ofields-dist" style="display:none;">
+                <label class="ov-check-label"><input type="checkbox" id="ov-dist-cb" onchange="applyOverride('dist')"/> Custom distance (km)</label>
+                <input type="number" class="override-input" id="ov-dist" placeholder="km..." step="0.1" oninput="applyOverride('dist')" style="display:none;"/>
+              </div>
+            </div>
+            <div class="preview-row" id="prow-rate">
+              <div class="preview-line"><span class="preview-key" id="pkey-rate">Rate:</span><span class="preview-val" id="pval-rate">—</span><button class="override-btn" onclick="toggleOverride('rate')">override</button></div>
+              <div class="override-fields" id="ofields-rate" style="display:none;">
+                <label class="ov-check-label"><input type="checkbox" id="ov-rate-cb" onchange="applyOverride('rate')"/> Custom rate ($/km)</label>
+                <input type="number" class="override-input" id="ov-rate" placeholder="$/km..." step="0.01" oninput="applyOverride('rate')" style="display:none;"/>
+              </div>
+            </div>
+            <div class="preview-row" id="prow-total">
+              <div class="preview-line"><span class="preview-key" id="pkey-total">Calculated Total:</span><span class="preview-val" id="pval-total">—</span><button class="override-btn" onclick="toggleOverride('total')">override</button></div>
+              <div class="override-fields" id="ofields-total" style="display:none;">
+                <label class="ov-check-label"><input type="checkbox" id="ov-total-cb" onchange="applyOverride('total')"/> Custom total ($)</label>
+                <input type="number" class="override-input" id="ov-total" placeholder="$..." step="0.01" oninput="applyOverride('total')" style="display:none;"/>
+              </div>
+            </div>
+            <div class="preview-row" id="prow-covered" style="display:none;">
+              <div class="preview-line"><span class="preview-key">Covered:</span><span class="preview-val" id="pval-covered">—</span><button class="override-btn" onclick="toggleOverride('covered')">override</button></div>
+              <div class="override-fields" id="ofields-covered" style="display:none;"><input type="number" class="override-input" id="ov-covered" placeholder="Custom covered..." step="0.01" oninput="applyOverride('covered')"/></div>
+            </div>
+            <div class="preview-row" id="prow-excess" style="display:none;">
+              <div class="preview-line"><span class="preview-key">Excess:</span><span class="preview-val" id="pval-excess">—</span><button class="override-btn" onclick="toggleOverride('excess')">override</button></div>
+              <div class="override-fields" id="ofields-excess" style="display:none;"><input type="number" class="override-input" id="ov-excess" placeholder="Custom excess..." step="0.01" oninput="applyOverride('excess')"/></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUMMARY preview -->
+      <div class="sec-block sec-neutral" style="border-left:none;">
+        <button class="collapse-section-btn" id="summary-btn" onclick="toggleCollapseSection('summary-content','summary-btn')">
+          <span class="arrow">▶</span><span class="section-label" style="margin-bottom:0;">Summary</span>
+        </button>
+        <div class="collapsible-content" id="summary-content">
+          <div class="preview-box" style="margin-top:6px;">
+            <div class="preview-row"><div class="preview-line"><span class="preview-key">Pickup:</span><span class="preview-val" id="sval-pickup">—</span></div></div>
+            <div class="preview-row"><div class="preview-line"><span class="preview-key">Dropoff:</span><span class="preview-val" id="sval-dropoff">—</span></div></div>
+            <div class="preview-row">
+              <div class="preview-line">
+                <span class="preview-key">Rate:</span><span class="preview-val" id="sval-rate">—</span>
+                <label class="ov-check-label" style="margin-left:auto;gap:4px;"><input type="checkbox" id="sum-rate-cb" checked onchange="updatePreview()"/><span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">include</span></label>
+              </div>
+            </div>
+            <div class="preview-row">
+              <div class="preview-line">
+                <span class="preview-key">Cost:</span><span class="preview-val" id="sval-cost">—</span>
+                <label class="ov-check-label" style="margin-left:auto;gap:4px;"><input type="checkbox" id="sum-cost-cb" checked onchange="updatePreview()"/><span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">include</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- end lhs-dimable -->
+
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel panel-right" id="panel-right">
+    <div class="panel-header">
+      <span class="panel-title">Providers &amp; Quotes</span>
+      <button class="collapse-btn" onclick="togglePanel('right')" title="Collapse">▶</button>
+    </div>
+    <span class="collapsed-label">Providers &amp; Quotes</span>
+    <div class="panel-content">
+
+      <!-- RHS TIER COVERAGE -->
+      <div class="sec-block" style="border-left:2px solid var(--amber);background:var(--sec-amber);">
+        <div class="sec-label-colored" style="color:var(--amber);">Tier Coverage</div>
+        <div class="coverage-boxes">
+          <div class="coverage-box" id="cov-box-T2" onclick="selectCoverage('T2')">
+            <div class="coverage-box-tier">T2</div>
+            <div class="coverage-box-amount">$750 covered</div>
+          </div>
+          <div class="coverage-box" id="cov-box-T3" onclick="selectCoverage('T3')">
+            <div class="coverage-box-tier">T3</div>
+            <div class="coverage-box-amount">$2,000 covered</div>
+          </div>
+        </div>
+        <div id="coverage-override-wrap" style="display:none;">
+          <label class="checkbox-label" style="font-size:0.72rem;">
+            <input type="checkbox" id="coverage-override-cb" onchange="toggleCoverageOverride()" style="width:13px;height:13px;accent-color:var(--accent);"/>
+            Override covered amount
+          </label>
+          <input type="number" id="coverage-override-input" placeholder="$..." step="0.01" oninput="calcCoverage()" style="display:none;width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.8rem;padding:6px 10px;outline:none;margin-top:4px;"/>
+        </div>
+        <div class="coverage-result" id="coverage-result" style="display:none;">
+          <div class="coverage-row">
+            <span class="coverage-label">Covered</span>
+            <span class="coverage-val covered" id="cov-covered-val">—</span>
+          </div>
+          <div class="coverage-row">
+            <span class="coverage-label">Excess</span>
+            <span class="coverage-val" id="cov-excess-val">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RHS CONTENT — expands after tier selected -->
+      <div class="expand-panel" id="rhs-main-panel">
+
+      <!-- PRE-AGREED -->
+      <div class="sec-block" style="border-left:2px solid var(--accent);background:rgba(var(--accent-rgb),0.05);">
+        <div class="pre-agreed-bar" id="pre-agreed-bar" onclick="togglePreAgreed()">
+          <div class="pre-agreed-dot" id="pre-agreed-dot"></div>
+          <span class="pre-agreed-label">$5.40/km</span>
+          <span class="pre-agreed-rate">$5.40/km</span>
+        </div>
+        <button class="btn btn-secondary" id="rhs-pre-agreed-copy-btn" onclick="copyPreAgreed()" style="display:none;font-size:0.7rem;">Copy</button>
+      </div>
+
+      <!-- QUOTE PROVIDER + SORT -->
+      <div class="sec-block" style="border-left:2px solid #378add;background:var(--sec-blue);">
+        <div class="sec-label-colored" style="color:#378add;">Quote Provider</div>
+        <div class="location-input-wrap">
+          <input type="text" id="quote-provider-input" placeholder="Search business or address..." autocomplete="off" oninput="onProviderInputChanged()" style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:10px 12px;outline:none;transition:border-color 0.2s;"/>
+        </div>
+        <label class="checkbox-label" style="font-size:0.72rem;">
+          <input type="checkbox" id="provider-manual-name-cb" onchange="toggleProviderManualName()" style="width:13px;height:13px;accent-color:var(--accent);"/>
+          Add business name manually
+        </label>
+        <div id="provider-manual-name-wrap" style="display:none;">
+          <input type="text" id="provider-manual-name-input" placeholder="Business name..." autocomplete="off" style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:8px 12px;outline:none;transition:border-color 0.2s;" oninput="onProviderNameChanged()"/>
+        </div>
+      </div>
+
+      <!-- EXTRA TRAVEL -->
+      <div class="sec-block" id="extra-travel-sec-block" style="border-left:2px solid #f97316;background:rgba(249,115,22,0.05);">
+        <div class="sec-label-colored" style="color:#f97316;">Extra Travel</div>
+        <label class="checkbox-label" style="font-size:0.72rem;">
+          <input type="checkbox" id="truck-starts-here" onchange="calcExtraTravel()" style="width:13px;height:13px;accent-color:#f97316;"/>
+          Truck starts from base
+        </label>
+        <div id="extra-travel-section" style="display:none;">
+          <div class="extra-travel-box">
+            <div class="extra-combined" id="extra-combined-val">— km · $—</div>
+            <div style="height:1px;background:rgba(249,115,22,0.25);margin:4px 0;"></div>
+            <label class="checkbox-label" style="font-size:0.72rem;color:#f97316;"><input type="checkbox" id="fixed-cost-cb" onchange="toggleFixedCost()" style="width:13px;height:13px;accent-color:#f97316;"/> Fixed cost instead</label>
+            <div id="fixed-cost-input-wrap" style="display:none;">
+              <input type="number" id="fixed-cost-input" placeholder="Fixed $ amount..." step="0.01" oninput="calcExtraTravel()" style="width:100%;background:var(--input-bg);border:1px solid rgba(249,115,22,0.4);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.8rem;padding:6px 10px;outline:none;"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUOTE ENTRY -->
+      <div class="sec-block" id="quote-entry-sec-block" style="border-left:2px solid #7f77dd;background:var(--sec-purple);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="sec-label-colored" style="color:#7f77dd;">Quote</div>
+          <button class="toggle-btn" onclick="toggleQuoteMode()"><span id="quote-mode-label">Enter Total</span> ⇄</button>
+        </div>
+        <div class="rate-row">
+          <div class="field-box" id="quote-input-box">
+            <label id="quote-input-label">Quoted Total ($)</label>
+            <input type="number" id="quote-input" placeholder="0.00" step="0.01" oninput="calcQuote();calcCoverage()"/>
+          </div>
+          <div class="field-box is-output">
+            <label id="quote-output-label">Calculated Rate</label>
+            <div class="out-value" id="quote-output-val">$—</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveQuote()">Save Quote</button>
+          <button class="btn btn-secondary" onclick="copyQuote()">Copy</button>
+        </div>
+      </div>
+
+      <!-- SAVED QUOTES -->
+      <div class="sec-block sec-neutral" style="border-left:2px solid var(--border);">
+        <div class="sec-label-colored" style="color:var(--muted);">Saved Quotes</div>
+        <div id="saved-quotes-list" style="display:flex;flex-direction:column;gap:6px;">
+          <div class="quote-add-btn" onclick="focusNewQuote()">+ New quote</div>
+        </div>
+        <button class="btn btn-secondary" onclick="copyAllQuotes()" style="margin-top:4px;font-size:0.7rem;">Copy All Quotes</button>
+      </div>
+
+      </div><!-- end rhs-main-panel -->
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE ──
+  let map, directionsService, directionsRenderer;
+  let extraTravelRenderer1, extraTravelRenderer2;
+  let originAutocomplete, destAutocomplete;
+  let distanceKm = null;
+  let mapClickTarget = null;
+  let geocoder;
+  let providerMarkers = [];
+  let allProviders = [];
+  let activeCatFilters = new Set(['A','B','C']);
+  let savedQuotes = [];
+  let activeQuoteIdx = null;
+  let quoteMode = 'total';
+  let selectedProvider = null;
+  let currentTheme = 'claude';
+  let pricingMode = 'rate-to-total';
+  let splitMode = 'dollar';
+  let preAgreed = false;
+  let rhsOpen = false;
+  let sortMode = 'default';
+  let providerDistances = {};
+  const overrides = {};
+  const PRE_AGREED_RATE = 5.40;
+
+  // ── TIER STATE ──
+  const TIER_COVERED = {T1: 10, T2: 20, T3: 50};
+  const EXCESS_RATE = 5.30;
+  let tierOverrideOpen = false;
+  let tierOverrideMode = 'rate'; // 'rate' | 'total'
+  let tierOverrideValue = null;
+  let selectedCoverage = null;
+  let pricingOverrideOpen = false;
+
+  // Google Sheet ID
+  const SHEET_ID = '1V_9eCaUkArDOTc3n3RzoQEq1UA9SyfUY4O3-SF-RR3c';
+
+  // ── THEMES ──
+  const mapStyles = {
+    'github-dark':[{elementType:'geometry',stylers:[{color:'#161b22'}]},{elementType:'labels.text.stroke',stylers:[{color:'#161b22'}]},{elementType:'labels.text.fill',stylers:[{color:'#8b949e'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#21262d'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#2d333b'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#090c10'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#58a6ff'}]}],
+    'vscode':[{elementType:'geometry',stylers:[{color:'#252526'}]},{elementType:'labels.text.stroke',stylers:[{color:'#252526'}]},{elementType:'labels.text.fill',stylers:[{color:'#808080'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#2d2d30'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#3c3c3c'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#1e1e1e'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#4fc1ff'}]}],
+    'linear':[{elementType:'geometry',stylers:[{color:'#17171a'}]},{elementType:'labels.text.stroke',stylers:[{color:'#17171a'}]},{elementType:'labels.text.fill',stylers:[{color:'#6e6e80'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#1f1f24'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#2a2a30'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#0a0a0c'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#5e6ad2'}]}],
+    'notion':[{elementType:'geometry',stylers:[{color:'#f7f6f3'}]},{elementType:'labels.text.stroke',stylers:[{color:'#f7f6f3'}]},{elementType:'labels.text.fill',stylers:[{color:'#9b9a97'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#e9e9e7'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#d8d8d4'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#b8ccd8'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#37352f'}]}],
+    'tailwind':[{elementType:'geometry',stylers:[{color:'#f1f5f9'}]},{elementType:'labels.text.stroke',stylers:[{color:'#f1f5f9'}]},{elementType:'labels.text.fill',stylers:[{color:'#64748b'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#e2e8f0'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#cbd5e1'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#93c5fd'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#0f172a'}]}],
+    'soft-dark':[{elementType:'geometry',stylers:[{color:'#181d2c'}]},{elementType:'labels.text.stroke',stylers:[{color:'#181d2c'}]},{elementType:'labels.text.fill',stylers:[{color:'#8896aa'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#252e44'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#303c58'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#0a0e1a'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative',elementType:'geometry',stylers:[{color:'#252e44'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#c4c9d4'}]}],
+    'warm-dusk':[{elementType:'geometry',stylers:[{color:'#261d14'}]},{elementType:'labels.text.stroke',stylers:[{color:'#261d14'}]},{elementType:'labels.text.fill',stylers:[{color:'#b09070'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#36281c'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#463424'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#140e08'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#e8a84a'}]}],
+    'slate-light':[{elementType:'geometry',stylers:[{color:'#c8d0e0'}]},{elementType:'labels.text.stroke',stylers:[{color:'#c8d0e0'}]},{elementType:'labels.text.fill',stylers:[{color:'#1a202c'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#b8c4d8'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#a8b8cc'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#8090b0'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#2563eb'}]}],
+    'soft-cream':[{elementType:'geometry',stylers:[{color:'#dcd4c0'}]},{elementType:'labels.text.stroke',stylers:[{color:'#dcd4c0'}]},{elementType:'labels.text.fill',stylers:[{color:'#3c2c18'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#ccc4b0'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#bcb4a0'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#90a8b8'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#6a4c28'}]}],
+    'earthy':[{elementType:'geometry',stylers:[{color:'#524c48'}]},{elementType:'labels.text.stroke',stylers:[{color:'#524c48'}]},{elementType:'labels.text.fill',stylers:[{color:'#d8d0c0'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#605a54'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#6e6860'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#303030'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#e0d868'}]}],
+    'claude':[{elementType:'geometry',stylers:[{color:'#221f30'}]},{elementType:'labels.text.stroke',stylers:[{color:'#221f30'}]},{elementType:'labels.text.fill',stylers:[{color:'#9090b8'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#2e2a40'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#3a3650'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#141020'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#cc785c'}]}],
+    'mint':[{elementType:'geometry',stylers:[{color:'#b8e8bc'}]},{elementType:'labels.text.stroke',stylers:[{color:'#b8e8bc'}]},{elementType:'labels.text.fill',stylers:[{color:'#182818'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#a4d8a8'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#90c898'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#68a888'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#3a6840'}]}],
+    'neopolitan':[{elementType:'geometry',stylers:[{color:'#2a1020'}]},{elementType:'labels.text.stroke',stylers:[{color:'#2a1020'}]},{elementType:'labels.text.fill',stylers:[{color:'#c09090'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#3c1c2e'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#4e2840'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#180810'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#f3b3a6'}]}],
+    'lavender':[{elementType:'geometry',stylers:[{color:'#d0d4ec'}]},{elementType:'labels.text.stroke',stylers:[{color:'#d0d4ec'}]},{elementType:'labels.text.fill',stylers:[{color:'#18182a'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#c0c4e0'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#b0b4d4'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#8888b8'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#4a5080'}]}],
+    'blush-forest':[{elementType:'geometry',stylers:[{color:'#364438'}]},{elementType:'labels.text.stroke',stylers:[{color:'#364438'}]},{elementType:'labels.text.fill',stylers:[{color:'#d8c8c0'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#425248'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#4e6058'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#1e2c20'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#f0d0ca'}]}],
+    'olive-plum':[{elementType:'geometry',stylers:[{color:'#dcd8c8'}]},{elementType:'labels.text.stroke',stylers:[{color:'#dcd8c8'}]},{elementType:'labels.text.fill',stylers:[{color:'#1a1018'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#ccc8b8'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#bcb8a8'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#909880'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#6a4060'}]}],
+    'steel':[{elementType:'geometry',stylers:[{color:'#352820'}]},{elementType:'labels.text.stroke',stylers:[{color:'#352820'}]},{elementType:'labels.text.fill',stylers:[{color:'#b0c0d0'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#44342a'}]},{featureType:'road.highway',elementType:'geometry',stylers:[{color:'#544038'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#181410'}]},{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]},{featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#8eb8e5'}]}],
+  };
+  const routeColors={'github-dark':'#58a6ff','vscode':'#4fc1ff','linear':'#5e6ad2','notion':'#2eaadc','tailwind':'#6366f1','soft-dark':'#c8f135','warm-dusk':'#e8a84a','slate-light':'#2563eb','soft-cream':'#6a4c28','earthy':'#e0d868','claude':'#cc785c','mint':'#3a6840','neopolitan':'#f3b3a6','lavender':'#4a5080','blush-forest':'#f0d0ca','olive-plum':'#6a4060','steel':'#8eb8e5'};
+
+  function toggleSettings() { document.getElementById('settings-panel').classList.toggle('open'); }
+  function setTheme(theme) {
+    document.body.className = theme==='soft-dark'?'':'theme-'+theme;
+    currentTheme=theme;
+    document.querySelectorAll('.theme-option').forEach(el=>el.classList.remove('active'));
+    document.getElementById('theme-opt-'+theme).classList.add('active');
+    if(map){map.setOptions({styles:mapStyles[theme]});directionsRenderer.setOptions({polylineOptions:{strokeColor:routeColors[theme],strokeWeight:4}});}
+    document.getElementById('settings-panel').classList.remove('open');
+  }
+
+  // ── PANEL COLLAPSE ──
+  function togglePanel(side) {
+    const panel = document.getElementById('panel-'+side);
+    const btn = panel.querySelector('.collapse-btn');
+    panel.classList.toggle('collapsed');
+    if(side==='left') btn.textContent = panel.classList.contains('collapsed') ? '▶' : '◀';
+    else {
+      btn.textContent = panel.classList.contains('collapsed') ? '◀' : '▶';
+      rhsOpen = !panel.classList.contains('collapsed');
+      document.getElementById('lhs-dimable').classList.toggle('lhs-dimmed', rhsOpen);
+    }
+  }
+
+  // ── MAP INIT ──
+  window.initMap = function() {
+    geocoder = new google.maps.Geocoder();
+    map = new google.maps.Map(document.getElementById('map'), {
+      center:{lat:-34.9285,lng:138.6007}, zoom:10,
+      styles:mapStyles['claude'], zoomControl:true,
+      mapTypeControl:false, streetViewControl:false, fullscreenControl:false,
+    });
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({map, suppressMarkers:false, polylineOptions:{strokeColor:'#cc785c',strokeWeight:4}});
+    extraTravelRenderer1 = new google.maps.DirectionsRenderer({map, suppressMarkers:true, polylineOptions:{strokeColor:'#22d3ee',strokeWeight:3,strokeOpacity:0.7}, preserveViewport:true});
+    extraTravelRenderer2 = new google.maps.DirectionsRenderer({map, suppressMarkers:true, polylineOptions:{strokeColor:'#22d3ee',strokeWeight:3,strokeOpacity:0.7}, preserveViewport:true});
+
+    const saBounds = new google.maps.LatLngBounds(new google.maps.LatLng(-38.06,129.00),new google.maps.LatLng(-26.00,141.00));
+    const acOptions = {componentRestrictions:{country:'au'},bounds:saBounds,strictBounds:false};
+    originAutocomplete = new google.maps.places.Autocomplete(document.getElementById('origin-input'),acOptions);
+    destAutocomplete   = new google.maps.places.Autocomplete(document.getElementById('dest-input'),acOptions);
+
+    map.addListener('click',(e)=>{
+      if(!mapClickTarget) return;
+      geocoder.geocode({location:e.latLng},(results,status)=>{
+        if(status==='OK'&&results[0]){
+          document.getElementById(mapClickTarget==='origin'?'origin-input':'dest-input').value=results[0].formatted_address;
+          clearMapTarget(); updatePreview();
+        }
+      });
+    });
+
+    loadProviders();
+    document.getElementById('settings-panel').addEventListener('click',e=>e.stopPropagation());
+  };
+
+  // ── MAP TARGET ──
+  function setMapTarget(target) {
+    if(mapClickTarget===target){clearMapTarget();return;}
+    mapClickTarget=target;
+    document.getElementById('pin-origin').classList.toggle('active',target==='origin');
+    document.getElementById('pin-dest').classList.toggle('active',target==='dest');
+    document.getElementById('origin-input').classList.toggle('active-target',target==='origin');
+    document.getElementById('dest-input').classList.toggle('active-target',target==='dest');
+    if(map) map.getDiv().style.cursor='crosshair';
+  }
+  function clearMapTarget() {
+    mapClickTarget=null;
+    ['pin-origin','pin-dest'].forEach(id=>document.getElementById(id).classList.remove('active'));
+    ['origin-input','dest-input'].forEach(id=>document.getElementById(id).classList.remove('active-target'));
+    if(map) map.getDiv().style.cursor='';
+  }
+
+  // ── ROUTING ──
+  function calculateRoute() {
+    const origin=document.getElementById('origin-input').value.trim();
+    const dest=document.getElementById('dest-input').value.trim();
+    if(!origin||!dest){showToast('Enter both locations first.');return;}
+    directionsService.route({origin,destination:dest,travelMode:google.maps.TravelMode.DRIVING,unitSystem:google.maps.UnitSystem.METRIC},(result,status)=>{
+      if(status==='OK'){
+        directionsRenderer.setDirections(result);
+        distanceKm=Math.round(result.routes[0].legs[0].distance.value/1000*10)/10;
+        document.getElementById('dist-value').textContent=distanceKm+' km';
+        calcPricing(); calcSplit(); calcExtraTravel(); updatePreview(); calcTier();
+      } else {showToast('Could not calculate route.');}
+    });
+  }
+
+  // ── PRICING OVERRIDE PANEL ──
+  function togglePricingOverride() {
+    pricingOverrideOpen = !pricingOverrideOpen;
+    document.getElementById('pricing-override-toggle').classList.toggle('active', pricingOverrideOpen);
+    document.getElementById('pricing-override-expand').classList.toggle('open', pricingOverrideOpen);
+  }
+
+  // ── PRICING ──
+  function togglePricingMode() {
+    pricingMode=pricingMode==='rate-to-total'?'total-to-rate':'rate-to-total';
+    const isRTT=pricingMode==='rate-to-total';
+    document.getElementById('pricing-toggle-label').textContent=isRTT?'Rate → Total':'Total → Rate';
+    document.getElementById('rate-label').textContent=isRTT?'Rate ($/km)':'Total ($)';
+    document.getElementById('total-label').textContent=isRTT?'Total':'Rate ($/km)';
+    document.getElementById('rate-box').classList.toggle('is-output',!isRTT);
+    document.getElementById('total-box').classList.toggle('is-output',isRTT);
+    updatePreview();
+  }
+  function calcPricing() {
+    const val=parseFloat(document.getElementById('rate-input').value);
+    const out=document.getElementById('total-value');
+    if(pricingMode==='rate-to-total') out.textContent=(distanceKm!==null&&!isNaN(val))?'$'+(distanceKm*val).toFixed(2):'$—';
+    else out.textContent=(distanceKm!==null&&!isNaN(val)&&distanceKm>0)?'$'+(val/distanceKm).toFixed(2)+'/km':'$—';
+    calcSplit(); calcExtraTravel(); updatePreview();
+  }
+  function getPricingValues() {
+    const val=parseFloat(document.getElementById('rate-input').value);
+    let totalDollars=null,ratePerKm=null;
+    if(pricingMode==='rate-to-total'&&distanceKm!==null&&!isNaN(val)){ratePerKm=val;totalDollars=distanceKm*val;}
+    else if(pricingMode==='total-to-rate'&&distanceKm!==null&&!isNaN(val)&&distanceKm>0){totalDollars=val;ratePerKm=val/distanceKm;}
+    return{totalDollars,ratePerKm};
+  }
+
+  // ── SPLIT ──
+  function toggleSplit() {
+    const open=document.getElementById('split-checkbox').checked;
+    document.getElementById('split-section').classList.toggle('open',open);
+    document.getElementById('split-mode-wrap').style.display=open?'block':'none';
+    if(open) calcSplit();
+  }
+  function toggleSplitMode() {
+    splitMode=splitMode==='dollar'?'km':'dollar';
+    const isKm=splitMode==='km';
+    document.getElementById('split-toggle-label').textContent=isKm?'km mode':'$ mode';
+    document.getElementById('covered-label').textContent=isKm?'Covered (km)':'Covered ($)';
+    document.getElementById('covered-input').value='';
+    document.getElementById('excess-dollar-value').textContent='$—';
+    document.getElementById('excess-km-value').textContent='—';
+    document.getElementById('excess-km-box').style.display=isKm?'':'none';
+    calcSplit();
+  }
+  function calcSplit() {
+    if(!document.getElementById('split-checkbox').checked) return;
+    const covered=parseFloat(document.getElementById('covered-input').value);
+    const{totalDollars,ratePerKm}=getPricingValues();
+    const exDollarEl=document.getElementById('excess-dollar-value');
+    const exKmEl=document.getElementById('excess-km-value');
+    if(splitMode==='dollar'){
+      exDollarEl.textContent=(totalDollars!==null&&!isNaN(covered))?'$'+(totalDollars-covered).toFixed(2):'$—';
+    } else {
+      if(distanceKm!==null&&!isNaN(covered)){
+        const exKm=distanceKm-covered;
+        exKmEl.textContent=exKm.toFixed(1)+' km';
+        exDollarEl.textContent=ratePerKm!==null?'$'+(exKm*ratePerKm).toFixed(2):'$—';
+      } else {exKmEl.textContent='—';exDollarEl.textContent='$—';}
+    }
+    updatePreview();
+  }
+
+  // ── PROVIDER ADDRESS SEARCH ──
+  let providerAutocomplete = null;
+  let providerMarker = null;
+  let providerAddress = null;
+  let providerDisplayName = null;
+
+  function initProviderAutocomplete() {
+    const saBounds = new google.maps.LatLngBounds(new google.maps.LatLng(-38.06,129.00),new google.maps.LatLng(-26.00,141.00));
+    const acOptions = {componentRestrictions:{country:'au'},bounds:saBounds,strictBounds:false};
+    providerAutocomplete = new google.maps.places.Autocomplete(document.getElementById('quote-provider-input'), acOptions);
+    providerAutocomplete.addListener('place_changed', () => {
+      const place = providerAutocomplete.getPlace();
+      if (!place.geometry) { providerAddress = null; clearProviderMarker(); return; }
+      providerAddress = place.formatted_address || document.getElementById('quote-provider-input').value;
+      const manualName = document.getElementById('provider-manual-name-cb').checked
+        ? document.getElementById('provider-manual-name-input').value.trim()
+        : '';
+      providerDisplayName = manualName || place.name || providerAddress;
+      selectedProvider = { name: providerDisplayName, address: providerAddress };
+      placeProviderMarker(place.geometry.location, providerDisplayName);
+      calcExtraTravel();
+      calcQuote();
+    });
+  }
+
+  function onProviderInputChanged() {
+    // If user clears the field, clear the provider
+    if (!document.getElementById('quote-provider-input').value.trim()) {
+      providerAddress = null;
+      selectedProvider = null;
+      clearProviderMarker();
+      clearExtraTravel();
+    }
+  }
+
+  function onProviderNameChanged() {
+    if (selectedProvider) {
+      const manualName = document.getElementById('provider-manual-name-input').value.trim();
+      selectedProvider.name = manualName || providerAddress;
+      providerDisplayName = selectedProvider.name;
+    }
+  }
+
+  function toggleProviderManualName() {
+    const cb = document.getElementById('provider-manual-name-cb');
+    document.getElementById('provider-manual-name-wrap').style.display = cb.checked ? '' : 'none';
+    if (!cb.checked && selectedProvider) {
+      selectedProvider.name = providerAddress;
+      providerDisplayName = selectedProvider.name;
+    }
+  }
+
+  function placeProviderMarker(location, label) {
+    clearProviderMarker();
+    providerMarker = new google.maps.Marker({
+      position: location,
+      map,
+      title: label,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 9,
+        fillColor: '#378add',
+        fillOpacity: 0.95,
+        strokeColor: '#fff',
+        strokeWeight: 2,
+      },
+      zIndex: 10,
+    });
+    const infoWindow = new google.maps.InfoWindow({
+      content: `<div style="font-family:monospace;font-size:12px;padding:4px;"><b>${label}</b></div>`
+    });
+    providerMarker.addListener('click', () => infoWindow.open(map, providerMarker));
+  }
+
+  function clearProviderMarker() {
+    if (providerMarker) { providerMarker.setMap(null); providerMarker = null; }
+  }
+
+  function loadProviders() {
+    // No sheet loading needed — provider is entered manually
+    initProviderAutocomplete();
+  }
+
+  // ── EXTRA TRAVEL ──
+  function onProviderSelected() {
+    // Legacy stub — no longer used (dropdown replaced by autocomplete)
+  }
+
+  function toggleFixedCost() {
+    const fixed=document.getElementById('fixed-cost-cb').checked;
+    document.getElementById('fixed-cost-input-wrap').style.display=fixed?'':'none';
+    calcExtraTravel();
+  }
+
+  function calcExtraTravel() {
+    if(preAgreed){clearExtraTravel();return;}
+    const truckFromBase=document.getElementById('truck-starts-here').checked;
+    if(!selectedProvider||!truckFromBase||distanceKm===null){
+      document.getElementById('extra-travel-section').style.display='none';
+      clearExtraTravel();return;
+    }
+    document.getElementById('extra-travel-section').style.display='';
+    const originVal=document.getElementById('origin-input').value.trim();
+    const destVal=document.getElementById('dest-input').value.trim();
+    if(!originVal||!destVal) return;
+    directionsService.route({origin:selectedProvider.address,destination:originVal,travelMode:google.maps.TravelMode.DRIVING,unitSystem:google.maps.UnitSystem.METRIC},(r1,s1)=>{
+      if(s1!=='OK') return;
+      const leg1km=r1.routes[0].legs[0].distance.value/1000;
+      extraTravelRenderer1.setDirections(r1);
+      directionsService.route({origin:destVal,destination:selectedProvider.address,travelMode:google.maps.TravelMode.DRIVING,unitSystem:google.maps.UnitSystem.METRIC},(r2,s2)=>{
+        if(s2!=='OK') return;
+        const leg2km=r2.routes[0].legs[0].distance.value/1000;
+        extraTravelRenderer2.setDirections(r2);
+        // Correct formula: extra km = (base→pickup + dropoff→base − job km) / 2
+        // All $/km rates are round-trip, so we halve the dead-leg overhead
+        const extraKm=Math.max(0,Math.round((leg1km+leg2km-distanceKm)/2*10)/10);
+        const rate=getEffectiveRate();
+        const fixed=document.getElementById('fixed-cost-cb').checked;
+        let extraCost=null;
+        if(fixed) extraCost=parseFloat(document.getElementById('fixed-cost-input').value)||0;
+        else if(rate!==null) extraCost=extraKm*rate;
+        const costStr=extraCost!==null?'$'+extraCost.toFixed(2):'$—';
+        document.getElementById('extra-combined-val').textContent=`+${extraKm.toFixed(1)} km · ${costStr}`;
+        window._lastExtraKm=extraKm;
+        window._lastExtraCost=extraCost;
+      });
+    });
+  }
+
+  function clearExtraTravel() {
+    try{extraTravelRenderer1.setDirections({routes:[]});}catch(e){}
+    try{extraTravelRenderer2.setDirections({routes:[]});}catch(e){}
+    const el=document.getElementById('extra-combined-val');
+    if(el) el.textContent='— km · $—';
+    document.getElementById('extra-travel-section').style.display='none';
+    window._lastExtraKm=null;window._lastExtraCost=null;
+  }
+
+  // ── QUOTE ──
+  function toggleQuoteMode() {
+    quoteMode=quoteMode==='total'?'rate':'total';
+    const isTotal=quoteMode==='total';
+    document.getElementById('quote-mode-label').textContent=isTotal?'Enter Total':'Enter Rate';
+    document.getElementById('quote-input-label').textContent=isTotal?'Quoted Total ($)':'Quoted Rate ($/km)';
+    document.getElementById('quote-output-label').textContent=isTotal?'Calculated Rate':'Calculated Total';
+    calcQuote();
+  }
+
+  function calcQuote() {
+    if(preAgreed){
+      document.getElementById('quote-output-val').textContent=distanceKm!==null?'$'+(distanceKm*PRE_AGREED_RATE).toFixed(2):'$—';
+      return;
+    }
+    const val=parseFloat(document.getElementById('quote-input').value);
+    const out=document.getElementById('quote-output-val');
+    if(quoteMode==='total'){
+      out.textContent=(distanceKm!==null&&!isNaN(val)&&distanceKm>0)?'$'+(val/distanceKm).toFixed(2)+'/km':'$—';
+    } else {
+      out.textContent=(distanceKm!==null&&!isNaN(val))?'$'+(val*distanceKm).toFixed(2):'$—';
+    }
+  }
+
+  function saveQuote() {
+    if(!selectedProvider){showToast('Select a provider first.');return;}
+    let inputVal, outputVal, totalDollars;
+    if(preAgreed){
+      inputVal=PRE_AGREED_RATE;
+      totalDollars=distanceKm!==null?distanceKm*PRE_AGREED_RATE:null;
+      outputVal=totalDollars!==null?'$'+totalDollars.toFixed(2):'$—';
+    } else {
+      inputVal=parseFloat(document.getElementById('quote-input').value);
+      if(isNaN(inputVal)){showToast('Enter a quote value first.');return;}
+      outputVal=document.getElementById('quote-output-val').textContent;
+      // Resolve total dollars regardless of input mode
+      if(quoteMode==='total') {
+        totalDollars=inputVal;
+      } else if(distanceKm!==null) {
+        const extraKm=window._lastExtraKm||0;
+        totalDollars=inputVal*(distanceKm+extraKm);
+      } else {
+        totalDollars=null;
+      }
+    }
+    const truckFromBase=!preAgreed&&document.getElementById('truck-starts-here').checked;
+    savedQuotes.push({provider:selectedProvider.name,category:'',preAgreed,inputMode:quoteMode,inputVal,outputVal,totalDollars,truckFromBase,extraKm:window._lastExtraKm,extraCost:window._lastExtraCost});
+    renderSavedQuotes();
+    showToast(selectedProvider.name+' quote saved ✓');
+  }
+
+  function renderSavedQuotes() {
+    const container=document.getElementById('saved-quotes-list');
+    container.innerHTML='';
+    savedQuotes.forEach((q,i)=>{
+      const card=document.createElement('div');
+      card.className='quote-card'+(activeQuoteIdx===i?' active-quote':'');
+      const quotedLabel=q.inputMode==='total'?'Quoted Total':'Quoted Rate';
+      const calcLabel=q.inputMode==='total'?'Calc. Rate':'Calc. Total';
+      const quotedVal=q.inputMode==='total'?'$'+q.inputVal.toFixed(2):'$'+q.inputVal.toFixed(2)+'/km';
+      card.innerHTML=`
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="quote-card-name">${q.provider}${q.category?' <span style="font-size:0.65rem;color:var(--muted);">['+q.category+']</span>':''}</span>
+          <button onclick="removeQuote(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;padding:0 2px;">✕</button>
+        </div>
+        <div class="quote-card-detail">${quotedLabel}: <span>${quotedVal}</span></div>
+        <div class="quote-card-detail">${calcLabel}: <span>${q.outputVal}</span></div>
+        ${q.preAgreed?'<span style="font-size:0.6rem;color:var(--accent);margin-left:4px;">PRE</span>':''}
+        ${q.truckFromBase&&q.extraKm!=null?`<div class="quote-card-detail">Extra: <span style="color:#f97316;">+${q.extraKm.toFixed(1)} km · ${q.extraCost!=null?'$'+q.extraCost.toFixed(2):'$—'}</span></div>`:''}
+      `;
+      card.onclick=(e)=>{ if(e.target.tagName==='BUTTON') return; activeQuoteIdx=(activeQuoteIdx===i?null:i); renderSavedQuotes(); };
+      container.appendChild(card);
+    });
+    const addBtn=document.createElement('div');
+    addBtn.className='quote-add-btn';
+    addBtn.textContent='+ New quote';
+    addBtn.onclick=focusNewQuote;
+    container.appendChild(addBtn);
+  }
+
+  function removeQuote(i) {
+    savedQuotes.splice(i,1);
+    if(activeQuoteIdx===i) activeQuoteIdx=null;
+    else if(activeQuoteIdx>i) activeQuoteIdx--;
+    renderSavedQuotes();
+  }
+
+  function focusNewQuote() {
+    document.getElementById('quote-input').focus();
+  }
+
+  function copyQuote() {
+    if(!selectedProvider){showToast('Select a provider first.');return;}
+    const val=parseFloat(document.getElementById('quote-input').value);
+    if(isNaN(val)){showToast('Enter a quote value first.');return;}
+    const outVal=document.getElementById('quote-output-val').textContent;
+    const quotedLabel=quoteMode==='total'?'Quoted Total':'Quoted Rate';
+    const calcLabel=quoteMode==='total'?'Calculated Rate':'Calculated Total';
+    const quotedVal=quoteMode==='total'?'$'+val.toFixed(2):'$'+val.toFixed(2)+'/km';
+    let text=`Provider: ${selectedProvider.name}\n${quotedLabel}: ${quotedVal}\n${calcLabel}: ${outVal}`;
+    if(document.getElementById('truck-starts-here').checked){
+      if(window._lastExtraKm!=null) text+=`\nExtra travel: +${window._lastExtraKm.toFixed(1)} km`;
+      if(window._lastExtraCost!=null) text+=`\nExtra cost: $${window._lastExtraCost.toFixed(2)}`;
+    }
+    navigator.clipboard.writeText(text).then(()=>showToast('Quote copied ✓')).catch(()=>showToast('Copy failed.'));
+  }
+
+  // ── OVERRIDES ──
+  function toggleOverride(field) {
+    const btn=document.querySelector(`#prow-${field} .override-btn`);
+    const fields=document.getElementById('ofields-'+field);
+    const isOpen=fields.style.display!=='none';
+    fields.style.display=isOpen?'none':'flex';
+    btn.classList.toggle('active',!isOpen);
+    if(isOpen){
+      delete overrides[field];
+      ['ov-dist','ov-total','ov-rate'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+      ['ov-dist-cb','ov-total-cb','ov-rate-cb'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+    }
+    updatePreview();
+  }
+
+  function applyOverride(field) {
+    if(field==='dist'){const cb=document.getElementById('ov-dist-cb');const inp=document.getElementById('ov-dist');inp.style.display=cb.checked?'':'none';overrides.dist=cb.checked?parseFloat(inp.value):null;}
+    else if(field==='rate'){const cb=document.getElementById('ov-rate-cb');const inp=document.getElementById('ov-rate');inp.style.display=cb.checked?'':'none';overrides.rate=cb.checked?parseFloat(inp.value):null;}
+    else if(field==='total'){const cb=document.getElementById('ov-total-cb');const inp=document.getElementById('ov-total');inp.style.display=cb.checked?'':'none';overrides.total=cb.checked?parseFloat(inp.value):null;}
+    else if(field==='covered'){overrides.covered=parseFloat(document.getElementById('ov-covered').value);}
+    else if(field==='excess'){overrides.excess=parseFloat(document.getElementById('ov-excess').value);}
+    updatePreview();
+  }
+
+  function getPreviewValues() {
+    const{totalDollars:calcTotal,ratePerKm:calcRate}=getPricingValues();
+    const distVal=(overrides.dist!=null&&!isNaN(overrides.dist))?overrides.dist:distanceKm;
+    const rateVal=(overrides.rate!=null&&!isNaN(overrides.rate))?overrides.rate:calcRate;
+    const totalVal=(overrides.total!=null&&!isNaN(overrides.total))?overrides.total:(distVal!==null&&rateVal!==null)?distVal*rateVal:calcTotal;
+    return{distVal,rateVal,totalVal};
+  }
+
+  function stripToSuburb(address) {
+    if(!address||address==='—') return address;
+    return address.replace(/,\s*Australia$/i,'').replace(/,\s*[A-Z]{2,3}\s+\d{4}$/i,'').trim();
+  }
+
+  function updatePreview() {
+    const from=document.getElementById('origin-input').value||'—';
+    const to=document.getElementById('dest-input').value||'—';
+    const{distVal,rateVal,totalVal}=getPreviewValues();
+    const distStr=distVal!==null?distVal.toFixed(1)+' kms':'—';
+    const rateStr=rateVal!==null?'$'+rateVal.toFixed(2)+'/km':'—';
+    const totalStr=totalVal!==null?'$'+totalVal.toFixed(2):'—';
+    const isRTT=pricingMode==='rate-to-total';
+    document.getElementById('pkey-rate').textContent=isRTT?'Rate:':'Calculated Rate:';
+    document.getElementById('pkey-total').textContent=isRTT?'Calculated Total:':'Total:';
+    setPreviewRow('from',from,false);
+    setPreviewRow('to',to,false);
+    setPreviewRow('dist',distStr,overrides.dist!=null&&!isNaN(overrides.dist));
+    setPreviewRow('rate',rateStr,overrides.rate!=null&&!isNaN(overrides.rate));
+    setPreviewRow('total',totalStr,overrides.total!=null&&!isNaN(overrides.total));
+    const splitOpen=document.getElementById('split-checkbox').checked;
+    document.getElementById('prow-covered').style.display=splitOpen?'':'none';
+    document.getElementById('prow-excess').style.display=splitOpen?'':'none';
+    if(splitOpen){
+      const coveredRaw=(overrides.covered!=null&&!isNaN(overrides.covered))?overrides.covered:parseFloat(document.getElementById('covered-input').value);
+      if(splitMode==='dollar'){
+        const covKm=(rateVal&&!isNaN(coveredRaw))?(coveredRaw/rateVal).toFixed(1):'—';
+        const exDol=(totalVal!==null&&!isNaN(coveredRaw))?(totalVal-coveredRaw).toFixed(2):'—';
+        const exKm=(distVal!==null&&covKm!=='—')?(distVal-parseFloat(covKm)).toFixed(1):'—';
+        setPreviewRow('covered',!isNaN(coveredRaw)?`$${coveredRaw.toFixed(2)} (${covKm} km @ ${rateStr})`:'—',overrides.covered!=null);
+        setPreviewRow('excess',exDol!=='—'?`$${exDol} (${exKm} km @ ${rateStr})`:'—',overrides.excess!=null);
+      } else {
+        const covDol=(rateVal&&!isNaN(coveredRaw))?(coveredRaw*rateVal).toFixed(2):'—';
+        const exKm=(distVal!==null&&!isNaN(coveredRaw))?(distVal-coveredRaw).toFixed(1):'—';
+        const exDol=(rateVal&&exKm!=='—')?(parseFloat(exKm)*rateVal).toFixed(2):'—';
+        setPreviewRow('covered',!isNaN(coveredRaw)?`${coveredRaw.toFixed(1)} km ($${covDol} @ ${rateStr})`:'—',overrides.covered!=null);
+        setPreviewRow('excess',exKm!=='—'?`${exKm} km ($${exDol} @ ${rateStr})`:'—',overrides.excess!=null);
+      }
+    }
+    document.getElementById('sval-pickup').textContent=stripToSuburb(from);
+    document.getElementById('sval-dropoff').textContent=stripToSuburb(to);
+    document.getElementById('sval-rate').textContent=rateStr;
+    document.getElementById('sval-cost').textContent=totalStr;
+  }
+
+  function setPreviewRow(field,value,isOverridden) {
+    const el=document.getElementById('pval-'+field);
+    if(!el) return;
+    el.textContent=value;
+    el.classList.toggle('overridden',isOverridden);
+  }
+
+  function copyDetails() {
+    const from = document.getElementById('origin-input').value || '—';
+    const to   = document.getElementById('dest-input').value   || '—';
+    const tier = document.getElementById('tier-select').value;
+    const secondTowEl = document.getElementById('tier-second-tow');
+    const secondTow = secondTowEl && secondTowEl.checked;
+    const distStr = distanceKm !== null ? distanceKm.toFixed(1) + ' km' : '—';
+
+    const lines = [
+      `Pickup:   ${stripToSuburb(from)}`,
+      `Dropoff:  ${stripToSuburb(to)}`,
+      `Dist:     ${distStr}`,
+    ];
+
+    if(tier && distanceKm !== null) {
+      const coveredKm = tier === 'T3' && secondTow ? 20 : TIER_COVERED[tier];
+      const excessKm  = Math.max(0, Math.round((distanceKm - coveredKm) * 10) / 10);
+
+      // Covered line — only show $ when T3 + 2nd tow + override active
+      const showCoveredCost = tier === 'T3' && secondTow && tierOverrideOpen && tierOverrideValue !== null;
+      if(showCoveredCost) {
+        const covCost = tierOverrideMode === 'rate'
+          ? tierOverrideValue * coveredKm
+          : tierOverrideValue * (coveredKm / distanceKm);
+        lines.push(`Covered:  ${coveredKm} km — $${covCost.toFixed(2)}`);
+      } else {
+        lines.push(`Covered:  ${coveredKm} km`);
+      }
+
+      // Excess line — only if there is excess
+      if(excessKm > 0) {
+        let excessCost;
+        if(tierOverrideOpen && tierOverrideValue !== null) {
+          excessCost = tierOverrideMode === 'rate'
+            ? tierOverrideValue * excessKm
+            : tierOverrideValue * (excessKm / distanceKm);
+        } else {
+          excessCost = Math.round(excessKm * EXCESS_RATE * 100) / 100;
+        }
+        lines.push(`Excess:   ${excessKm.toFixed(1)} km — $${excessCost.toFixed(2)}`);
+      }
+    }
+
+    navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('Copied ✓')).catch(() => showToast('Copy failed.'));
+  }
+
+  function clearAll() {
+    ['origin-input','dest-input','rate-input','covered-input'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('total-value').textContent='$—';
+    document.getElementById('dist-value').textContent='— km';
+    document.getElementById('excess-dollar-value').textContent='$—';
+    document.getElementById('excess-km-value').textContent='—';
+    document.getElementById('split-checkbox').checked=false;
+    document.getElementById('split-section').classList.remove('open');
+    document.getElementById('split-mode-wrap').style.display='none';
+    distanceKm=null;
+    Object.keys(overrides).forEach(k=>delete overrides[k]);
+    ['from','to','dist','rate','total','covered','excess'].forEach(field=>{
+      const ofields=document.getElementById('ofields-'+field);
+      const btn=document.querySelector(`#prow-${field} .override-btn`);
+      if(ofields) ofields.style.display='none';
+      if(btn) btn.classList.remove('active');
+    });
+    ['ov-dist-cb','ov-total-cb','ov-rate-cb'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+    ['ov-dist','ov-total','ov-rate'].forEach(id=>{const el=document.getElementById(id);if(el){el.value='';el.style.display='none';}});
+    if(directionsRenderer) directionsRenderer.setDirections({routes:[]});
+    clearExtraTravel();
+    clearMapTarget();
+    clearProviderMarker();
+    selectedProvider = null;
+    providerAddress = null;
+    providerDisplayName = null;
+    document.getElementById('quote-provider-input').value = '';
+    document.getElementById('provider-manual-name-cb').checked = false;
+    document.getElementById('provider-manual-name-wrap').style.display = 'none';
+    document.getElementById('provider-manual-name-input').value = '';
+    // Reset tier
+    document.getElementById('tier-select').value = '';
+    document.getElementById('tier-result').style.display = 'none';
+    document.getElementById('tier-second-tow-wrap').style.display = 'none';
+    document.getElementById('tier-override-sec').style.display = 'none';
+    document.getElementById('tier-override-wrap').classList.remove('open');
+    document.getElementById('tier-override-input').value = '';
+    document.getElementById('tier-override-calc').textContent = '$—';
+    tierOverrideOpen = false; tierOverrideValue = null; tierOverrideMode = 'rate';
+    // Reset coverage
+    selectedCoverage = null;
+    ['cov-box-T2','cov-box-T3'].forEach(id => document.getElementById(id).classList.remove('selected'));
+    document.getElementById('rhs-main-panel').classList.remove('open');
+    document.getElementById('coverage-override-wrap').style.display = 'none';
+    document.getElementById('coverage-override-cb').checked = false;
+    document.getElementById('coverage-override-input').value = '';
+    document.getElementById('coverage-override-input').style.display = 'none';
+    document.getElementById('coverage-result').style.display = 'none';
+    updatePreview();
+  }
+
+
+  // ── PRE-AGREED ──
+  function togglePreAgreed() {
+    preAgreed = !preAgreed;
+    document.getElementById('pre-agreed-bar').classList.toggle('active', preAgreed);
+    document.getElementById('extra-travel-sec-block').classList.toggle('rhs-greyed', preAgreed);
+    document.getElementById('quote-entry-sec-block').classList.toggle('rhs-greyed', preAgreed);
+    document.getElementById('rhs-pre-agreed-copy-btn').style.display = preAgreed ? '' : 'none';
+    if(preAgreed) { document.getElementById('truck-starts-here').checked = false; clearExtraTravel(); }
+    calcQuote();
+  }
+
+  function copyPreAgreed() {
+    const from = document.getElementById('origin-input').value || '—';
+    const to   = document.getElementById('dest-input').value   || '—';
+    const dist = distanceKm !== null ? distanceKm.toFixed(1) + ' km' : '—';
+    const totalCost = distanceKm !== null ? distanceKm * PRE_AGREED_RATE : null;
+    const costStr = totalCost !== null ? '$' + totalCost.toFixed(2) : '—';
+
+    const lines = [
+      `Pickup: ${stripToSuburb(from)}`,
+      `Dest:   ${stripToSuburb(to)}`,
+      `Dist:   ${dist}`,
+      `Cost:   ${costStr}`,
+    ];
+
+    // Factor in tier coverage if selected
+    if(selectedCoverage && totalCost !== null) {
+      const overrideCb  = document.getElementById('coverage-override-cb');
+      const overrideVal = parseFloat(document.getElementById('coverage-override-input').value);
+      const coveredAmt  = (overrideCb.checked && !isNaN(overrideVal)) ? overrideVal : COVERAGE_AMOUNTS[selectedCoverage];
+      lines.push(`Covered: $${coveredAmt.toFixed(2)}`);
+      const excess = Math.round((totalCost - coveredAmt) * 100) / 100;
+      if(excess > 0) lines.push(`Excess: $${excess.toFixed(2)}`);
+    }
+
+    navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('Copied ✓')).catch(() => showToast('Copy failed.'));
+  }
+
+  function getEffectiveRate() {
+    if(preAgreed) return PRE_AGREED_RATE;
+    const val = parseFloat(document.getElementById('quote-input').value);
+    if(quoteMode === 'total' && distanceKm && distanceKm > 0 && !isNaN(val)) return val / distanceKm;
+    if(quoteMode === 'rate' && !isNaN(val)) return val;
+    return null;
+  }
+
+  // ── TIER CALCULATOR ──
+  function calcTier() {
+    const tier = document.getElementById('tier-select').value;
+    const secondTowEl = document.getElementById('tier-second-tow');
+    const secondTow = secondTowEl && secondTowEl.checked;
+
+    document.getElementById('tier-second-tow-wrap').style.display = tier === 'T3' ? '' : 'none';
+    if(tier !== 'T3' && secondTowEl) secondTowEl.checked = false;
+
+    const overrideSec = document.getElementById('tier-override-sec');
+    if(!tier) {
+      document.getElementById('tier-result').style.display = 'none';
+      overrideSec.style.display = 'none';
+      tierOverrideOpen = false;
+      tierOverrideValue = null;
+      document.getElementById('tier-override-wrap').classList.remove('open');
+      document.getElementById('tier-override-toggle-btn').classList.remove('active');
+      return;
+    }
+    overrideSec.style.display = '';
+
+    const coveredKm = tier === 'T3' && secondTow ? 20 : TIER_COVERED[tier];
+    document.getElementById('tier-result').style.display = '';
+
+    if(distanceKm === null) {
+      document.getElementById('tier-covered-val').textContent = coveredKm + ' km';
+      document.getElementById('tier-covered-val').className = 'tier-val';
+      document.getElementById('tier-excess-km-val').textContent = '—';
+      document.getElementById('tier-excess-cost-val').textContent = '—';
+      calcTierOverride();
+      return;
+    }
+
+    const excessKm = Math.max(0, Math.round((distanceKm - coveredKm) * 10) / 10);
+    const excessCost = Math.round(excessKm * EXCESS_RATE * 100) / 100;
+    const isCovered = distanceKm <= coveredKm;
+
+    const covEl = document.getElementById('tier-covered-val');
+    covEl.textContent = coveredKm + ' km';
+    covEl.className = 'tier-val';
+
+    if(isCovered) {
+      document.getElementById('tier-excess-km-val').textContent = 'Covered ✓';
+      document.getElementById('tier-excess-km-val').className = 'tier-val covered';
+      document.getElementById('tier-excess-cost-val').textContent = '$0.00';
+      document.getElementById('tier-excess-cost-val').className = 'tier-val covered';
+    } else {
+      document.getElementById('tier-excess-km-val').textContent = '+' + excessKm.toFixed(1) + ' km';
+      document.getElementById('tier-excess-km-val').className = 'tier-val';
+      document.getElementById('tier-excess-cost-val').textContent = '$' + excessCost.toFixed(2);
+      document.getElementById('tier-excess-cost-val').className = 'tier-val accent';
+    }
+    calcTierOverride();
+  }
+
+  function toggleTierOverride() {
+    tierOverrideOpen = !tierOverrideOpen;
+    document.getElementById('tier-override-wrap').classList.toggle('open', tierOverrideOpen);
+    document.getElementById('tier-override-toggle-btn').classList.toggle('active', tierOverrideOpen);
+    if(!tierOverrideOpen) {
+      tierOverrideValue = null;
+      document.getElementById('tier-override-input').value = '';
+      document.getElementById('tier-override-calc').textContent = '$—';
+    }
+  }
+
+  function toggleTierOverrideMode() {
+    tierOverrideMode = tierOverrideMode === 'rate' ? 'total' : 'rate';
+    const isRate = tierOverrideMode === 'rate';
+    document.getElementById('tier-override-mode-label').textContent = isRate ? '$/km → $total' : '$total → $/km';
+    document.getElementById('tier-override-input-label').textContent = isRate ? 'Enter rate ($/km)' : 'Enter total ($)';
+    document.getElementById('tier-override-prefix').textContent = isRate ? 'Rate ($/km)' : 'Total ($)';
+    document.getElementById('tier-override-input').value = '';
+    document.getElementById('tier-override-calc').textContent = isRate ? '$—' : '$—/km';
+    tierOverrideValue = null;
+    calcTierOverride();
+  }
+
+  function calcTierOverride() {
+    if(!tierOverrideOpen) return;
+    const raw = parseFloat(document.getElementById('tier-override-input').value);
+    const calcEl = document.getElementById('tier-override-calc');
+    tierOverrideValue = isNaN(raw) ? null : raw;
+    if(tierOverrideValue === null || distanceKm === null) {
+      calcEl.textContent = tierOverrideMode === 'rate' ? '$—' : '$—/km';
+      return;
+    }
+    if(tierOverrideMode === 'rate') {
+      calcEl.textContent = '$' + (tierOverrideValue * distanceKm).toFixed(2);
+    } else {
+      calcEl.textContent = distanceKm > 0 ? '$' + (tierOverrideValue / distanceKm).toFixed(2) + '/km' : '$—/km';
+    }
+  }
+
+  // ── COLLAPSIBLE SECTIONS ──
+  function toggleCollapseSection(contentId, btnId) {
+    const el = document.getElementById(contentId);
+    const btn = document.getElementById(btnId);
+    const isOpen = el.classList.contains('open');
+    el.classList.toggle('open', !isOpen);
+    btn.classList.toggle('open', !isOpen);
+  }
+
+  // ── RHS COVERAGE ──
+  const COVERAGE_AMOUNTS = {T2: 750, T3: 2000};
+
+  function selectCoverage(tier) {
+    selectedCoverage = selectedCoverage === tier ? null : tier;
+    document.getElementById('cov-box-T2').classList.toggle('selected', selectedCoverage === 'T2');
+    document.getElementById('cov-box-T3').classList.toggle('selected', selectedCoverage === 'T3');
+    document.getElementById('coverage-override-wrap').style.display = selectedCoverage ? '' : 'none';
+    document.getElementById('rhs-main-panel').classList.toggle('open', !!selectedCoverage);
+    if(!selectedCoverage) {
+      document.getElementById('coverage-override-cb').checked = false;
+      document.getElementById('coverage-override-input').style.display = 'none';
+      document.getElementById('coverage-result').style.display = 'none';
+    }
+    calcCoverage();
+  }
+
+  function toggleCoverageOverride() {
+    const cb = document.getElementById('coverage-override-cb');
+    const inp = document.getElementById('coverage-override-input');
+    inp.style.display = cb.checked ? '' : 'none';
+    if(!cb.checked) inp.value = '';
+    calcCoverage();
+  }
+
+  function calcCoverage() {
+    if(!selectedCoverage) return;
+    const quoteVal = parseFloat(document.getElementById('quote-input').value);
+    let quotedTotal = null;
+    if(!isNaN(quoteVal)) {
+      if(quoteMode === 'total') {
+        quotedTotal = quoteVal;
+      } else if(distanceKm !== null) {
+        const extraKm = window._lastExtraKm || 0;
+        quotedTotal = quoteVal * (distanceKm + extraKm);
+      }
+    }
+    if(quotedTotal === null) { document.getElementById('coverage-result').style.display = 'none'; return; }
+
+    const overrideCb = document.getElementById('coverage-override-cb');
+    const overrideVal = parseFloat(document.getElementById('coverage-override-input').value);
+    const coveredAmt = (overrideCb.checked && !isNaN(overrideVal)) ? overrideVal : COVERAGE_AMOUNTS[selectedCoverage];
+
+    document.getElementById('coverage-result').style.display = '';
+    document.getElementById('cov-covered-val').textContent = '$' + coveredAmt.toFixed(2);
+
+    const excess = Math.round((quotedTotal - coveredAmt) * 100) / 100;
+    const excessEl = document.getElementById('cov-excess-val');
+    if(excess <= 0) {
+      excessEl.textContent = 'Covered ✓';
+      excessEl.className = 'coverage-val covered';
+    } else {
+      excessEl.textContent = '$' + excess.toFixed(2);
+      excessEl.className = 'coverage-val excess';
+    }
+  }
+
+  // ── COPY ALL QUOTES ──
+  function copyAllQuotes() {
+    if(savedQuotes.length === 0) { showToast('No quotes saved yet.'); return; }
+    let lines = [];
+    savedQuotes.forEach((q, i) => {
+      const quotedLabel = q.preAgreed ? 'Pre-agreed' : (q.inputMode === 'total' ? 'Quoted Total' : 'Quoted Rate');
+      const calcLabel = q.preAgreed ? 'Total' : (q.inputMode === 'total' ? 'Calc. Rate' : 'Calc. Total');
+      const quotedVal = q.preAgreed ? '$5.40/km' : (q.inputMode === 'total' ? '$'+q.inputVal.toFixed(2) : '$'+q.inputVal.toFixed(2)+'/km');
+      lines.push(q.provider || '—');
+      lines.push(`  ${quotedLabel}: ${quotedVal}`);
+      lines.push(`  ${calcLabel}: ${q.outputVal}`);
+      if(q.truckFromBase && q.extraKm != null) {
+        lines.push(`  Additional travel: +${q.extraKm.toFixed(1)} km · ${q.extraCost != null ? '$'+q.extraCost.toFixed(2) : '$—'}`);
+      }
+      // Coverage
+      if(selectedCoverage && q.totalDollars != null) {
+        const overrideCb = document.getElementById('coverage-override-cb');
+        const overrideVal = parseFloat(document.getElementById('coverage-override-input').value);
+        const coveredAmt = (overrideCb.checked && !isNaN(overrideVal)) ? overrideVal : COVERAGE_AMOUNTS[selectedCoverage];
+        lines.push(`  Covered: $${coveredAmt.toFixed(2)}`);
+        const excess = Math.round((q.totalDollars - coveredAmt) * 100) / 100;
+        if(excess > 0) lines.push(`  Excess: $${excess.toFixed(2)}`);
+      }
+      if(i < savedQuotes.length - 1) lines.push('────────────────────');
+    });
+    navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('All quotes copied ✓')).catch(() => showToast('Copy failed.'));
+  }
+
+  function showToast(msg) {
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+  }
+
+  document.addEventListener('click',(e)=>{
+    const panel=document.getElementById('settings-panel');
+    if(panel&&!panel.contains(e.target)&&!e.target.closest('.settings-btn')) panel.classList.remove('open');
+  });
+</script>
+</body>
+</html>
